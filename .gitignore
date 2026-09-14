@@ -1,0 +1,41 @@
+# Environment variables & secrets
+.env
+.env.local
+.env.*.local
+*.env
+
+# Python (Backend)
+venv/
+env/
+__pycache__/
+*.py[cod]
+*$py.class
+*.sqlite3
+
+# Node & Frontend / Hardhat
+node_modules/
+dist/
+build/
+.next/
+out/
+.cache/
+
+# Hardhat & Smart Contracts
+artifacts/
+cache/
+typechain/
+typechain-types/
+
+# OS / Editor files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+*.log
