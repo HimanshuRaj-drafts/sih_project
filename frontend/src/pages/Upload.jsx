@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { vault, db } from '../services/supabase';
+import { registerDocumentHash } from '../services/blockchain';
 import { UploadCloud, CheckCircle, Clock, ShieldCheck, Database, Link, AlertCircle, File } from 'lucide-react';
 
 const Upload = () => {
@@ -46,17 +47,22 @@ const Upload = () => {
       const storagePath = await vault.uploadEvidence(file, file.name);
       console.log("Station 2: Vault upload output path:", storagePath);
       
-      // Station 3: Blockchain Anchoring (Mock)
+      // Station 3: Blockchain Anchoring (Actual)
       setStatus('anchoring');
-      await delay(1500);
-      const fakeTxHash = "0x" + Math.random().toString(16).slice(2) + "abcdef1234567890";
       
       const arrayBuffer = await file.arrayBuffer();
       const hashBuffer = await crypto.subtle.digest('SHA-256', arrayBuffer);
       const hashArray = Array.from(new Uint8Array(hashBuffer));
       const realDocHash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
       
-      console.log("Station 3: Blockchain mock hash generation - TxHash:", fakeTxHash, "DocHash:", realDocHash);
+      let realTxHash = '';
+      try {
+        realTxHash = await registerDocumentHash(realDocHash);
+        console.log("Station 3: Blockchain anchoring complete - TxHash:", realTxHash, "DocHash:", realDocHash);
+      } catch (bcError) {
+        console.error("Blockchain registration failed:", bcError);
+        throw new Error("Blockchain registration failed. Please ensure your wallet is connected and you are the contract owner.");
+      }
       
       // Station 4: Database Registration (Actual Supabase DB)
       setStatus('database');
@@ -64,7 +70,7 @@ const Upload = () => {
         case_number: caseNumberInput.trim(),
         file_name: file.name,
         document_hash: realDocHash,
-        blockchain_tx_hash: fakeTxHash,
+        blockchain_tx_hash: realTxHash,
         uploader_id: user.id
       };
       console.log("Station 4: db.saveCaseMetadata payload:", payload);

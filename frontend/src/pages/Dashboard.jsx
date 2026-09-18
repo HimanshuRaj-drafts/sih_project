@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { db, supabase } from '../services/supabase';
-import { RefreshCw, Search, FileText, X, Loader, Eye } from 'lucide-react';
+import { verifyDocumentHash } from '../services/blockchain';
+import { RefreshCw, Search, FileText, X, Loader, Eye, ShieldCheck } from 'lucide-react';
 
 const Dashboard = () => {
   const [cases, setCases] = useState([]);
@@ -57,6 +58,24 @@ const Dashboard = () => {
     c.case_number?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     c.file_name?.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  const handleVerifyBlockchain = async (docHash) => {
+    if (!docHash) {
+      alert("No document hash available for verification.");
+      return;
+    }
+    try {
+      const result = await verifyDocumentHash(docHash);
+      if (result.exists) {
+        alert(`✅ Document verified on blockchain!\n\nUploader: ${result.uploader}\nTimestamp: ${new Date(result.timestamp).toLocaleString()}`);
+      } else {
+        alert("❌ Document not found on the blockchain.");
+      }
+    } catch (error) {
+      console.error("Verification error:", error);
+      alert("Verification failed. Make sure MetaMask is connected.\n" + (error.reason || error.message));
+    }
+  };
 
   return (
     <div className="p-8 animate-cipher" style={{animationDelay: '100ms'}}>
@@ -118,7 +137,15 @@ const Dashboard = () => {
                   <td className="p-4 text-slate-500 font-mono text-xs truncate max-w-[150px]" title={c.blockchain_tx_hash}>
                     {c.blockchain_tx_hash}
                   </td>
-                  <td className="p-4 text-right">
+                  <td className="p-4 text-right flex justify-end space-x-2">
+                    <button
+                      onClick={() => handleVerifyBlockchain(c.document_hash)}
+                      className="inline-flex items-center space-x-1 text-sm text-emerald-600 hover:text-emerald-800 transition-colors font-medium bg-emerald-50 px-3 py-1.5 rounded-lg hover:bg-emerald-100"
+                      title="Verify on Blockchain"
+                    >
+                      <ShieldCheck className="h-4 w-4" />
+                      <span>Verify</span>
+                    </button>
                     <button
                       onClick={() => handleViewDocument(c.file_name)}
                       className="inline-flex items-center space-x-1 text-sm text-blue-600 hover:text-blue-800 transition-colors font-medium bg-blue-50 px-3 py-1.5 rounded-lg hover:bg-blue-100"
