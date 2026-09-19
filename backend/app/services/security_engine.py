@@ -1,7 +1,7 @@
 import io
 import re
 import hashlib
-import fitz  # PyMuPDF
+import pymupdf as fitz  # PyMuPDF
 
 # --- START: SIH STATION 1 & 4 SECURITY ENGINE ---
 

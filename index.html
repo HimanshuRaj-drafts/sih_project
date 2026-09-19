@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NCRB Secure Docs - Uploader</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-hover: #4f46e5;
+            --bg-gradient-start: #0f172a;
+            --bg-gradient-end: #1e1b4b;
+            --glass-bg: rgba(255, 255, 255, 0.05);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --success: #10b981;
+            --error: #ef4444;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, var(--bg-gradient-start), var(--bg-gradient-end));
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            overflow-x: hidden;
+        }
+
+        /* Abstract Background Orbs */
+        .orb {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(80px);
+            z-index: -1;
+            animation: float 10s infinite ease-in-out alternate;
+        }
+        .orb-1 {
+            width: 400px;
+            height: 400px;
+            background: rgba(99, 102, 241, 0.15);
+            top: -100px;
+            left: -100px;
+        }
+        .orb-2 {
+            width: 300px;
+            height: 300px;
+            background: rgba(168, 85, 247, 0.15);
+            bottom: -50px;
+            right: -50px;
+            animation-delay: -5s;
+        }
+
+        @keyframes float {
+            0% { transform: translateY(0) scale(1); }
+            100% { transform: translateY(30px) scale(1.05); }
+        }
+
+        .container {
+            width: 100%;
+            max-width: 600px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            padding: 2.5rem;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            transition: transform 0.3s ease;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            background: linear-gradient(to right, #818cf8, #c084fc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.5rem;
+        }
+
+        .header p {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--text-muted);
+        }
+
+        input[type="text"] {
+            width: 100%;
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            padding: 0.875rem 1rem;
+            color: var(--text-main);
+            font-size: 1rem;
+            transition: all 0.2s ease;
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+        }
+
+        .upload-area {
+            border: 2px dashed var(--glass-border);
+            border-radius: 16px;
+            padding: 3rem 2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            background: rgba(0, 0, 0, 0.1);
+        }
+
+        .upload-area:hover, .upload-area.dragover {
+            border-color: var(--primary);
+            background: rgba(99, 102, 241, 0.05);
+        }
+
+        .upload-area input[type="file"] {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        .upload-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            display: inline-block;
+            transition: transform 0.3s ease;
+        }
+
+        .upload-area:hover .upload-icon {
+            transform: translateY(-5px);
+        }
+
+        .btn-submit {
+            width: 100%;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 1rem;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-top: 1.5rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-download {
+            background: #10b981;
+            margin-top: 1rem;
+            text-decoration: none;
+        }
+
+        .btn-download:hover {
+            background: #059669;
+        }
+
+        .btn-submit:hover:not(:disabled) {
+            background: var(--primary-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(99, 102, 241, 0.4);
+        }
+
+        .btn-submit:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s linear infinite;
+            display: none;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Results Pane */
+        .results-pane {
+            margin-top: 2rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--glass-border);
+            display: none;
+            animation: slideUp 0.4s ease forwards;
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+        .status-success {
+            background: rgba(16, 185, 129, 0.2);
+            color: #34d399;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+        .status-error {
+            background: rgba(239, 68, 68, 0.2);
+            color: #f87171;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .data-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1rem;
+        }
+
+        .data-card {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 1rem;
+            border-radius: 12px;
+            border: 1px solid var(--glass-border);
+        }
+
+        .data-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.25rem;
+        }
+
+        .data-value {
+            font-size: 0.9rem;
+            font-family: monospace;
+            word-break: break-all;
+            color: #e2e8f0;
+        }
+        
+        .side-by-side {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+        
+        .text-box {
+            white-space: pre-wrap; 
+            font-size: 0.8rem; 
+            max-height: 200px; 
+            overflow-y: auto;
+            background: rgba(0,0,0,0.3);
+            padding: 0.75rem;
+            border-radius: 8px;
+            color: #cbd5e1;
+            border: 1px solid var(--glass-border);
+        }
+
+        .text-box-redacted {
+            border-color: rgba(239, 68, 68, 0.4);
+            color: #fca5a5;
+        }
+        
+        .file-name-display {
+            margin-top: 1rem;
+            font-size: 0.9rem;
+            color: #c084fc;
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+
+    <div class="container">
+        <div class="header">
+            <h1>NCRB Secure Docs</h1>
+            <p>Upload a PDF or Image to run OCR and detect PII</p>
+        </div>
+
+        <form id="uploadForm">
+            <div class="form-group">
+                <label for="authHeader">Authorization Token (Bearer)</label>
+                <input type="text" id="authHeader" placeholder="Bearer your-token-here" value="Bearer test-token">
+            </div>
+
+            <div class="upload-area" id="dropZone">
+                <div class="upload-icon">📄</div>
+                <h3 style="margin-bottom: 0.5rem; font-weight: 600;">Drag & Drop your file</h3>
+                <p style="color: var(--text-muted); font-size: 0.875rem;">or click to browse from computer</p>
+                <input type="file" id="fileInput" accept=".pdf,.png,.jpg,.jpeg" required>
+                <div class="file-name-display" id="fileNameDisplay"></div>
+            </div>
+
+            <button type="submit" class="btn-submit" id="submitBtn">
+                <span id="btnText">Secure Upload & Process</span>
+                <div class="spinner" id="spinner"></div>
+            </button>
+        </form>
+
+        <div class="results-pane" id="resultsPane">
+            <div id="statusBadge" class="status-badge status-success">Processing Complete</div>
+            
+            <div class="data-grid" id="dataGrid">
+                <!-- Results will be injected here -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const form = document.getElementById('uploadForm');
+        const fileInput = document.getElementById('fileInput');
+        const dropZone = document.getElementById('dropZone');
+        const fileNameDisplay = document.getElementById('fileNameDisplay');
+        const submitBtn = document.getElementById('submitBtn');
+        const btnText = document.getElementById('btnText');
+        const spinner = document.getElementById('spinner');
+        const resultsPane = document.getElementById('resultsPane');
+        const dataGrid = document.getElementById('dataGrid');
+        const statusBadge = document.getElementById('statusBadge');
+
+        // Handle Drag & Drop styling
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, preventDefaults, false);
+        });
+
+        function preventDefaults (e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropZone.addEventListener(eventName, () => dropZone.classList.add('dragover'), false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, () => dropZone.classList.remove('dragover'), false);
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            let dt = e.dataTransfer;
+            let files = dt.files;
+            fileInput.files = files;
+            updateFileName();
+        });
+
+        fileInput.addEventListener('change', updateFileName);
+
+        function updateFileName() {
+            if (fileInput.files.length > 0) {
+                fileNameDisplay.textContent = `Selected: ${fileInput.files[0].name}`;
+            } else {
+                fileNameDisplay.textContent = '';
+            }
+        }
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            if (fileInput.files.length === 0) return;
+
+            const authHeader = document.getElementById('authHeader').value;
+            const file = fileInput.files[0];
+            
+            const formData = new FormData();
+            formData.append('file', file);
+
+            // UI Loading State
+            submitBtn.disabled = true;
+            btnText.textContent = "Processing Document...";
+            spinner.style.display = "block";
+            resultsPane.style.display = "none";
+
+            try {
+                // Ensure backend is running on 8000
+                const response = await fetch('http://localhost:8000/process/upload', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': authHeader
+                    },
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.detail || "Upload failed. Check backend logs.");
+                }
+
+                // Success
+                statusBadge.className = 'status-badge status-success';
+                statusBadge.textContent = 'Processing Complete ✓';
+                
+                let piiText = "None detected";
+                if (data.pii_summary && Object.keys(data.pii_summary).length > 0) {
+                    const found = [];
+                    for (const [key, value] of Object.entries(data.pii_summary)) {
+                        if (value && value.length > 0) {
+                            found.push(`${key}: ${value.length}`);
+                        }
+                    }
+                    if (found.length > 0) piiText = found.join(', ');
+                }
+
+                dataGrid.innerHTML = `
+                    <div class="data-card">
+                        <div class="data-label">Document Hash (SHA-256)</div>
+                        <div class="data-value" style="color: #60a5fa;">${data.hash}</div>
+                    </div>
+                    <div class="data-card">
+                        <div class="data-label">Filename & Size</div>
+                        <div class="data-value">${data.filename} (${(data.size / 1024).toFixed(2)} KB)</div>
+                    </div>
+                    <div class="data-card">
+                        <div class="data-label">Detected PII Categories</div>
+                        <div class="data-value" style="color: #fbbf24;">${piiText}</div>
+                    </div>
+                    <div class="data-card">
+                        <div class="data-label">Extracted Text Comparison</div>
+                        <div class="side-by-side">
+                            <div>
+                                <div class="data-label" style="margin-bottom: 0.5rem;">Original (Raw)</div>
+                                <div class="text-box">${data.ocr_snippet || 'No text extracted.'}</div>
+                            </div>
+                            <div>
+                                <div class="data-label" style="margin-bottom: 0.5rem; color: #f87171;">Redacted (Sanitized)</div>
+                                <div class="text-box text-box-redacted">${data.redacted_snippet || 'No redacted text generated.'}</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                if (data.redacted_pdf_base64) {
+                    dataGrid.innerHTML += `
+                        <a href="data:application/pdf;base64,${data.redacted_pdf_base64}" download="redacted_${data.filename}" class="btn-submit btn-download">
+                            ⬇️ Download Redacted PDF
+                        </a>
+                    `;
+                }
+                
+                resultsPane.style.display = "block";
+
+            } catch (error) {
+                console.error(error);
+                statusBadge.className = 'status-badge status-error';
+                statusBadge.textContent = 'Upload Error ✕';
+                dataGrid.innerHTML = `
+                    <div class="data-card" style="border-color: rgba(239, 68, 68, 0.3);">
+                        <div class="data-label" style="color: #f87171;">Error Detail</div>
+                        <div class="data-value">${error.message}</div>
+                    </div>
+                `;
+                resultsPane.style.display = "block";
+            } finally {
+                // Reset Button State
+                submitBtn.disabled = false;
+                btnText.textContent = "Secure Upload & Process";
+                spinner.style.display = "none";
+            }
+        });
+    </script>
+</body>
+</html>
