@@ -3,9 +3,13 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import os
 import logging
+from dotenv import load_dotenv
+
+load_dotenv()
 
 from .process import router as process_router
 from .documents import router as documents_router
+from .backend_routes import router as evidence_router
 from app.services import init_services
 
 # Initialize FastAPI app
@@ -17,7 +21,10 @@ app = FastAPI(
 
 # CORS configuration
 frontend = os.getenv("FRONTEND_URL")
-allow_origins = [frontend] if frontend else ["*"]
+if frontend:
+    allow_origins = [frontend]
+else:
+    allow_origins = ["http://localhost:5173", "http://127.0.0.1:5173"]
 
 app.add_middleware(
     CORSMiddleware,
@@ -39,6 +46,7 @@ async def _startup() -> None:
 # Register routers for Stations 1 & 4
 app.include_router(process_router, prefix="/process", tags=["Processing"])
 app.include_router(documents_router, prefix="/documents", tags=["Documents"])
+app.include_router(evidence_router)  # Already has prefix="/api/v1/evidence"
 # Backwards-compatible root-level access for document routes used by older tests and clients.
 app.include_router(documents_router, tags=["Documents"], include_in_schema=False)
 

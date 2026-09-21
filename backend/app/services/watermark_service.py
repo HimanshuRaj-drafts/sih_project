@@ -39,7 +39,12 @@ def apply_watermark(pdf_stream: io.BytesIO, user_claims: Dict[str, str], opacity
 
     try:
         pdf_stream.seek(0)
-        doc = fitz.open(stream=pdf_stream.read(), filetype="pdf")
+        doc = fitz.open(stream=pdf_stream.read())
+        
+        if not doc.is_pdf:
+            pdf_bytes = doc.convert_to_pdf()
+            doc.close()
+            doc = fitz.open("pdf", pdf_bytes)
     except Exception:
         logging.exception("Failed to open PDF for watermarking")
         raise RuntimeError("Failed to open PDF for watermarking")

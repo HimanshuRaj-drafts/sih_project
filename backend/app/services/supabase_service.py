@@ -25,7 +25,7 @@ except Exception:  # pragma: no cover - missing dependency
 
 
 _client = None
-_BUCKET_NAME = "ncrb-docs"
+_BUCKET_NAME = "ncrb-vault"
 
 
 def _get_supabase_url() -> str:
@@ -55,16 +55,10 @@ def _ensure_client():
 
 
 def generate_storage_path(user_id: str, filename: str) -> str:
-    """Generate a timestamped, unique storage path for an upload.
-
-    Example: "{user_id}/20260918T123456Z_3f5a7c1e_filename.pdf"
+    """Generate a storage path matching the frontend expectation.
     """
-    ts = datetime.utcnow().strftime("%Y%m%dT%H%M%SZ")
-    unique = uuid4().hex[:8]
-    # sanitize filename minimally
     safe_name = filename.replace("/", "_")
-    path = f"{user_id}/{ts}_{unique}_{safe_name}"
-    return path
+    return f"evidence/{safe_name}"
 
 
 def upload_master_pdf(file_bytes: io.BytesIO, filename: str, user_id: str) -> str:

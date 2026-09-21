@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { vault, db } from '../services/supabase';
 import { registerDocumentHash } from '../services/blockchain';
+import { uploadEvidence, anchorEvidence } from '../services/frontend_api';
 import { UploadCloud, CheckCircle, Clock, ShieldCheck, Database, Link, AlertCircle, File } from 'lucide-react';
 
 const Upload = () => {
@@ -14,12 +15,14 @@ const Upload = () => {
   const [status, setStatus] = useState('idle'); // idle, redacting, archiving, anchoring, database, complete, error
   const [errorMessage, setErrorMessage] = useState('');
   const [success, setSuccess] = useState(false);
+  const [previewData, setPreviewData] = useState(null);
 
   const handleFileChange = (e) => {
     if (e.target.files && e.target.files[0]) {
       setFile(e.target.files[0]);
       setStatus('idle');
       setErrorMessage('');
+      setPreviewData(null);
     }
   };
 
@@ -37,31 +40,27 @@ const Upload = () => {
     setSuccess(false);
     
     try {
-      // Station 1: AI Redaction (Mock)
-      console.log("Station 1: Redaction simulation start");
+      // Station 1 & 2: AI Redaction & Vault Archival (FastAPI Backend)
+      console.log("Station 1: Redaction & Upload start");
       setStatus('redacting');
-      await delay(2000);
+      const uploadRes = await uploadEvidence(file, caseNumberInput.trim(), user.id);
       
-      // Station 2: Vault Archival (Actual Supabase Storage)
       setStatus('archiving');
-      const storagePath = await vault.uploadEvidence(file, file.name);
-      console.log("Station 2: Vault upload output path:", storagePath);
+      await delay(500); // Small delay for visual effect
+      console.log("Station 2: Vault upload output result:", uploadRes);
       
-      // Station 3: Blockchain Anchoring (Actual)
+      // Station 3: Blockchain Anchoring (FastAPI Backend)
       setStatus('anchoring');
-      
-      const arrayBuffer = await file.arrayBuffer();
-      const hashBuffer = await crypto.subtle.digest('SHA-256', arrayBuffer);
-      const hashArray = Array.from(new Uint8Array(hashBuffer));
-      const realDocHash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+      const realDocHash = uploadRes.document_hash;
       
       let realTxHash = '';
       try {
-        realTxHash = await registerDocumentHash(realDocHash);
+        const anchorRes = await anchorEvidence(uploadRes.document_id, uploadRes.document_hash, user.id);
+        realTxHash = anchorRes.transaction_hash;
         console.log("Station 3: Blockchain anchoring complete - TxHash:", realTxHash, "DocHash:", realDocHash);
       } catch (bcError) {
         console.error("Blockchain registration failed:", bcError);
-        throw new Error("Blockchain registration failed. Please ensure your wallet is connected and you are the contract owner.");
+        throw new Error("Blockchain registration failed. Please ensure backend web3 configuration is correct.");
       }
       
       // Station 4: Database Registration (Actual Supabase DB)
@@ -85,10 +84,12 @@ const Upload = () => {
       
       setStatus('complete');
       setSuccess(true);
-      
-      setTimeout(() => {
-        navigate('/dashboard');
-      }, 1500);
+      setPreviewData({
+        base64: uploadRes.redacted_preview_base64,
+        entities: uploadRes.redacted_entities || [],
+        docHash: realDocHash,
+        txHash: realTxHash
+      });
       
     } catch (err) {
       console.error(err);
@@ -124,14 +125,78 @@ const Upload = () => {
         </div>
       )}
 
-      {success && (
-        <div className="mb-8 p-4 bg-emerald-50 border border-emerald-200 rounded-xl flex items-start space-x-3 text-emerald-800 shadow-sm animate-cipher" style={{animationDelay: '200ms'}}>
-          <CheckCircle className="h-5 w-5 flex-shrink-0 mt-0.5 text-emerald-600" />
-          <p className="text-sm font-bold">Document Secured & Registered</p>
+      {success && previewData && (
+        <div className="mb-8 p-6 bg-emerald-50 border-2 border-emerald-500 rounded-3xl flex flex-col space-y-6 shadow-sm animate-cipher" style={{animationDelay: '200ms'}}>
+          <div className="flex items-center justify-between border-b border-emerald-200 pb-4">
+            <div className="flex items-center space-x-3 text-emerald-800">
+              <CheckCircle className="h-8 w-8 flex-shrink-0 text-emerald-600" />
+              <div>
+                <h2 className="text-xl font-black">Document Secured & Registered</h2>
+                <p className="text-sm font-semibold text-emerald-600">Redactions applied and blockchain anchor verified.</p>
+              </div>
+            </div>
+            <button 
+              onClick={() => navigate('/dashboard')}
+              className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-6 rounded-xl transition-colors shadow-sm text-sm"
+            >
+              Go to Dashboard
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div className="space-y-4">
+              <h3 className="font-bold text-slate-800 border-b pb-2">Permanent Redaction Preview</h3>
+              <div className="bg-white p-2 border border-slate-200 rounded-xl shadow-inner">
+                {previewData.base64 && previewData.base64.startsWith('data:application/pdf') ? (
+                  <iframe src={previewData.base64} className="w-full h-96 border-0 rounded-lg" title="Redacted Preview" />
+                ) : previewData.base64 ? (
+                  <img src={previewData.base64} className="w-full max-h-96 object-contain mx-auto rounded-lg" alt="Redacted Preview" />
+                ) : (
+                  <div className="h-96 flex items-center justify-center text-slate-400">Preview not available</div>
+                )}
+              </div>
+            </div>
+
+            <div className="space-y-6">
+              <div>
+                <h3 className="font-bold text-slate-800 border-b pb-2 mb-4">Detected PII Masked</h3>
+                <div className="flex flex-wrap gap-2">
+                  {previewData.entities.length > 0 ? previewData.entities.map((ent, idx) => (
+                    <span key={idx} className="inline-flex items-center px-3 py-1.5 bg-emerald-100 text-emerald-800 text-xs font-bold rounded-full border border-emerald-200">
+                      ✓ {ent.count} {ent.type} Redacted
+                    </span>
+                  )) : (
+                    <span className="text-sm text-slate-500 font-medium">No PII detected requiring redaction.</span>
+                  )}
+                </div>
+              </div>
+
+              <div>
+                <h3 className="font-bold text-slate-800 border-b pb-2 mb-4">Cryptographic Receipt</h3>
+                <div className="space-y-4 bg-white p-4 rounded-xl border border-emerald-100">
+                  <div>
+                    <label className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-1">Evidence Hash (SHA-256)</label>
+                    <p className="font-mono text-sm text-slate-700 bg-slate-50 p-2 rounded border border-slate-200 break-all">{previewData.docHash}</p>
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-1">Blockchain Tx Hash</label>
+                    <a 
+                      href={`https://amoy.polygonscan.com/tx/${previewData.txHash}`} 
+                      target="_blank" 
+                      rel="noreferrer"
+                      className="font-mono text-sm text-blue-600 hover:text-blue-800 underline block truncate bg-blue-50 p-2 rounded border border-blue-100"
+                    >
+                      {previewData.txHash}
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       )}
 
-      <div className="bg-white border border-slate-200 rounded-3xl shadow-sm overflow-hidden flex flex-col lg:flex-row">
+      <div className={`bg-white border border-slate-200 rounded-3xl shadow-sm overflow-hidden flex flex-col lg:flex-row transition-all duration-500 ${success ? 'opacity-50 pointer-events-none scale-95 origin-top' : ''}`}>
         
         {/* Left Side: Upload Area */}
         <div className="lg:w-1/2 p-8 border-b lg:border-b-0 lg:border-r border-slate-100 bg-slate-50/50 flex flex-col justify-center">

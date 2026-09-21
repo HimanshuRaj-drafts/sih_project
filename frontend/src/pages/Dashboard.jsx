@@ -3,14 +3,14 @@ import { createPortal } from 'react-dom';
 import { db, supabase } from '../services/supabase';
 import { verifyDocumentHash } from '../services/blockchain';
 import { RefreshCw, Search, FileText, X, Loader, Eye, ShieldCheck } from 'lucide-react';
+import ViewEvidenceModal from '../components/ViewEvidenceModal';
 
 const Dashboard = () => {
   const [cases, setCases] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedDocUrl, setSelectedDocUrl] = useState('');
+  const [selectedDocId, setSelectedDocId] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isDocLoading, setIsDocLoading] = useState(false);
 
   const fetchCases = async () => {
     setLoading(true);
@@ -29,29 +29,9 @@ const Dashboard = () => {
     fetchCases();
   }, []);
 
-  const handleViewDocument = async (fileName) => {
+  const handleViewDocument = (fileName) => {
+    setSelectedDocId(fileName);
     setIsModalOpen(true);
-    setIsDocLoading(true);
-    setSelectedDocUrl('');
-
-    try {
-      const { data, error } = await supabase.storage
-        .from('ncrb-vault')
-        .createSignedUrl('evidence/' + fileName, 60);
-
-      if (error) {
-        console.error("Error generating signed URL:", error);
-        return;
-      }
-      
-      if (data?.signedUrl) {
-        setSelectedDocUrl(data.signedUrl);
-      }
-    } catch (error) {
-      console.error("Error in handleViewDocument:", error);
-    } finally {
-      setIsDocLoading(false);
-    }
   };
 
   const filteredCases = cases.filter(c => 
@@ -166,54 +146,14 @@ const Dashboard = () => {
       </div>
 
       {/* Document Viewer Modal */}
-      {isModalOpen && createPortal(
-        <div className="fixed inset-0 z-[9999] bg-slate-950 flex flex-col transition-opacity animate-in fade-in duration-200">
-          {/* Header */}
-          <div className="flex justify-between items-center px-6 py-4 border-b border-slate-800 bg-slate-900 shadow-sm backdrop-blur-md">
-            <h3 className="font-semibold text-slate-200 flex items-center gap-3 text-lg tracking-tight">
-              <FileText className="h-5 w-5 text-blue-500" />
-              Secure Document Viewer
-            </h3>
-            <button
-              onClick={() => {
-                setIsModalOpen(false);
-                setSelectedDocUrl('');
-              }}
-              className="text-slate-400 hover:text-white transition-colors bg-slate-800 hover:bg-slate-700 p-2 rounded-full shadow-sm"
-              aria-label="Close modal"
-            >
-              <X className="h-6 w-6" />
-            </button>
-          </div>
-          
-          {/* Body */}
-          <div className="flex-1 flex items-center justify-center p-4 sm:p-8 overflow-hidden bg-slate-950">
-            {isDocLoading ? (
-              <div className="flex flex-col items-center gap-4 text-slate-400">
-                <Loader className="h-10 w-10 animate-spin text-blue-500" />
-                <p className="font-medium animate-pulse tracking-wide">Decrypting and loading secure document...</p>
-              </div>
-            ) : selectedDocUrl ? (
-              <div className="w-full h-full bg-white rounded-xl shadow-2xl overflow-hidden flex flex-col ring-1 ring-slate-800">
-                <iframe 
-                  src={selectedDocUrl} 
-                  className="w-full flex-1 bg-white border-0" 
-                  title="Document Viewer"
-                />
-              </div>
-            ) : (
-              <div className="flex flex-col items-center gap-3 text-slate-400">
-                <div className="h-16 w-16 rounded-full bg-slate-900 flex items-center justify-center mb-2">
-                  <X className="h-8 w-8 text-red-500" />
-                </div>
-                <p className="font-medium text-slate-300 text-lg">Failed to load document.</p>
-                <p className="text-sm">The document might be unavailable or you lack permissions.</p>
-              </div>
-            )}
-          </div>
-        </div>,
-        document.body
-      )}
+      <ViewEvidenceModal 
+        isOpen={isModalOpen}
+        onClose={() => {
+          setIsModalOpen(false);
+          setSelectedDocId('');
+        }}
+        documentId={selectedDocId}
+      />
     </div>
   );
 };
