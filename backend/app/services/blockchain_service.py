@@ -33,7 +33,9 @@ def store_evidence_mock(document_hash: str, document_id: str, uploader_id: str) 
         "block_number": _CURRENT_BLOCK
     }
     
-    MOCK_LEDGER[document_hash] = record
+    clean_hash = document_hash.strip().lower()
+    print(f"DEBUG: Saved Hash to Ledger: {clean_hash}")
+    MOCK_LEDGER[clean_hash] = record
     
     return {
       "status": "anchored",
@@ -45,7 +47,8 @@ def store_evidence_mock(document_hash: str, document_id: str, uploader_id: str) 
 
 def get_evidence_mock(document_hash: str) -> dict:
     """Retrieves mocked anchored evidence from the in-memory ledger."""
-    record = _LEDGER.get(document_hash)
+    clean_hash = document_hash.strip().lower()
+    record = MOCK_LEDGER.get(clean_hash)
     
     if record:
         return {

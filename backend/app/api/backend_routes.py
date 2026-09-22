@@ -102,7 +102,8 @@ async def upload_evidence(
 
         # 4. Cryptographic Hashing of ORIGINAL Content (for Zero-Trust Verification)
         # We must anchor the raw original evidence hash, not the redacted version.
-        doc_hash = hashlib.sha256(content).hexdigest()
+        doc_hash = hashlib.sha256(content).hexdigest().strip().lower()
+        print(f"ANCHORED HASH: {doc_hash}")
         
         # 5. Generate document ID
         document_id = str(uuid.uuid4())
@@ -168,6 +169,7 @@ from app.services.blockchain_service import MOCK_LEDGER
 @router.get("/verify/{document_hash}")
 def verify_evidence(document_hash: str):
     clean_hash = document_hash.strip().lower()
+    print(f"VERIFYING HASH: {clean_hash}")
     
     # Validate it's a 64-character hex string
     if not re.match(r"^[a-f0-9]{64}$", clean_hash):
