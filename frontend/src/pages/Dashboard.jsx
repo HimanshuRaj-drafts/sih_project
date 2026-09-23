@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
+import { useSearchParams } from 'react-router-dom';
 import { db, supabase } from '../services/supabase';
 import { verifyDocumentHash } from '../services/blockchain';
 import { RefreshCw, Search, FileText, X, Loader, Eye, ShieldCheck } from 'lucide-react';
@@ -8,7 +9,8 @@ import ViewEvidenceModal from '../components/ViewEvidenceModal';
 const Dashboard = () => {
   const [cases, setCases] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const searchTerm = searchParams.get('q') || '';
   const [selectedDocId, setSelectedDocId] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -58,7 +60,7 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="p-8 animate-cipher" style={{animationDelay: '100ms'}}>
+    <div className="p-4 sm:p-8 animate-cipher" style={{animationDelay: '100ms'}}>
       <div className="flex justify-between items-end mb-8">
         <div>
           <h1 className="text-4xl font-black text-slate-900 mb-3 tracking-tight">Dashboard</h1>
@@ -66,21 +68,21 @@ const Dashboard = () => {
         </div>
       </div>
 
-      <div className="flex items-center space-x-4 mb-6">
-        <div className="relative flex-1 max-w-md">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center space-y-4 sm:space-y-0 sm:space-x-4 mb-6">
+        <div className="relative flex-1 w-full sm:max-w-md">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 h-5 w-5" />
           <input
             type="text"
             placeholder="Search by case number or filename..."
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+            onChange={(e) => setSearchParams(e.target.value ? { q: e.target.value } : {})}
+            className="w-full pl-10 pr-4 py-3 sm:py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-base sm:text-sm"
           />
         </div>
         <button
           onClick={fetchCases}
           disabled={loading}
-          className="flex items-center space-x-2 px-4 py-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors border border-blue-200 font-semibold"
+          className="flex items-center justify-center w-full sm:w-auto space-x-2 px-4 py-3 sm:py-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors border border-blue-200 font-semibold"
         >
           <RefreshCw className={`h-5 w-5 ${loading ? 'animate-spin' : ''}`} />
           <span>Refresh</span>
@@ -88,8 +90,9 @@ const Dashboard = () => {
       </div>
 
       <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
-        <table className="w-full text-left border-collapse">
-          <thead>
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse min-w-[600px]">
+            <thead>
             <tr className="bg-slate-50 border-b border-slate-200 text-slate-500 text-sm uppercase tracking-wider">
               <th className="p-4 font-semibold">Case Number</th>
               <th className="p-4 font-semibold">File Name</th>
@@ -117,18 +120,18 @@ const Dashboard = () => {
                   <td className="p-4 text-slate-500 font-mono text-xs truncate max-w-[150px]" title={c.blockchain_tx_hash}>
                     {c.blockchain_tx_hash}
                   </td>
-                  <td className="p-4 text-right flex justify-end space-x-2">
-                    <button
+                  <td className="p-4 text-right flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-2">
+                    {/* <button
                       onClick={() => handleVerifyBlockchain(c.document_hash)}
-                      className="inline-flex items-center space-x-1 text-sm text-emerald-600 hover:text-emerald-800 transition-colors font-medium bg-emerald-50 px-3 py-1.5 rounded-lg hover:bg-emerald-100"
+                      className="inline-flex items-center justify-center space-x-1 text-sm text-emerald-600 hover:text-emerald-800 transition-colors font-medium bg-emerald-50 px-3 py-3 sm:py-1.5 rounded-lg hover:bg-emerald-100 min-h-[44px] sm:min-h-0"
                       title="Verify on Blockchain"
                     >
                       <ShieldCheck className="h-4 w-4" />
                       <span>Verify</span>
-                    </button>
+                    </button> */}
                     <button
                       onClick={() => handleViewDocument(c.file_name)}
-                      className="inline-flex items-center space-x-1 text-sm text-blue-600 hover:text-blue-800 transition-colors font-medium bg-blue-50 px-3 py-1.5 rounded-lg hover:bg-blue-100"
+                      className="inline-flex items-center justify-center space-x-1 text-sm text-blue-600 hover:text-blue-800 transition-colors font-medium bg-blue-50 px-3 py-3 sm:py-1.5 rounded-lg hover:bg-blue-100 min-h-[44px] sm:min-h-0"
                     >
                       <Eye className="h-4 w-4" />
                       <span>Inspect</span>
@@ -143,6 +146,7 @@ const Dashboard = () => {
             )}
           </tbody>
         </table>
+        </div>
       </div>
 
       {/* Document Viewer Modal */}

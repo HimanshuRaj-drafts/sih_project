@@ -1,0 +1,37 @@
+# Project Tech Stack
+
+This document outlines the technologies used in the NCRB Secure Docs project and their respective purposes. The project is divided into three main components: Frontend, Backend, and Blockchain.
+
+## 1. Frontend (Web UI)
+The frontend is built as a single-page application (SPA) focused on performance and modern UI/UX.
+
+- **React (v18)**: The core JavaScript library used for building the user interface.
+- **Vite**: A fast build tool and development server, chosen over Create React App for quicker hot module replacement (HMR) and optimized builds.
+- **TailwindCSS**: A utility-first CSS framework for rapid UI styling and responsive design.
+- **React Router DOM**: Handles client-side routing and navigation between different pages in the application.
+- **Ethers.js**: A library used to interact with the Ethereum blockchain and smart contracts from the browser.
+- **Supabase JS**: The official client for connecting to Supabase (used for authentication, database, and/or file storage).
+- **Axios**: A promise-based HTTP client for making API requests to the Python backend.
+- **Lucide React**: Used for rendering SVG icons consistently across the application.
+- **React Dropzone**: A React hook/component used to handle file uploads via drag-and-drop.
+
+## 2. Backend (API & Processing)
+The backend is responsible for document processing, optical character recognition (OCR), and interacting with both the blockchain and database.
+
+- **Python**: The primary programming language used for the backend logic.
+- **FastAPI**: A modern, high-performance web framework for building the RESTful APIs.
+- **Uvicorn**: An ASGI web server implementation used to run the FastAPI application.
+- **PyMuPDF & Pillow (PIL)**: Used for processing and manipulating PDF documents and images.
+- **PyTesseract & OpenCV**: Used for Optical Character Recognition (OCR) to extract text from images or scanned documents.
+- **Web3.py**: A Python library used for interacting with the Ethereum blockchain, likely for verifying or writing data from the backend.
+- **Supabase (Python Client)**: Used to interact with the Supabase database and storage from the backend.
+- **Pydantic**: Used for data validation and settings management using Python type annotations.
+- **Python-dotenv**: Loads environment variables from a `.env` file into the application.
+
+## 3. Blockchain (Smart Contracts)
+The blockchain layer ensures secure, immutable records or access controls.
+
+- **Hardhat**: An Ethereum development environment used for compiling, deploying, testing, and debugging smart contracts.
+- **Solidity**: The primary programming language used for writing Ethereum smart contracts (implied by Hardhat usage).
+- **OpenZeppelin Contracts**: A library of secure, standard smart contract implementations (like ERC tokens or Access Control) to ensure security and reliability.
+- **Dotenv**: Used in the Node.js environment to securely load blockchain keys and RPC URLs during deployment and testing.

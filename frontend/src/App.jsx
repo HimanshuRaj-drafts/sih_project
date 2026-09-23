@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import Sidebar from './components/Sidebar'
 import TopBar from './components/TopBar'
@@ -20,6 +20,8 @@ const ProtectedRoute = ({ children }) => {
 }
 
 const App = () => {
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
   return (
     <AuthProvider>
       <Router>
@@ -32,9 +34,15 @@ const App = () => {
             element={
               <ProtectedRoute>
                 <div className="flex h-screen overflow-hidden bg-slate-50 grid-bg font-sans">
-                  <Sidebar />
-                  <div className="flex-1 flex flex-col min-w-0">
-                    <TopBar />
+                  {sidebarOpen && (
+                    <div 
+                      className="fixed inset-0 bg-slate-900/50 z-30 md:hidden" 
+                      onClick={() => setSidebarOpen(false)} 
+                    />
+                  )}
+                  <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
+                  <div className="flex-1 flex flex-col min-w-0 w-full overflow-hidden">
+                    <TopBar setSidebarOpen={setSidebarOpen} />
                     <main className="flex-1 overflow-y-auto">
                       <Routes>
                         <Route path="/dashboard" element={<Dashboard />} />

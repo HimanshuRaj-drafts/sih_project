@@ -43,12 +43,12 @@ export default function DocumentViewer({ documentId }) {
       <div className="viewer-controls">
         <h2>Document Viewer</h2>
         {/* Added Verify Button for Station 4 */}
-        <button 
+        {/* <button 
           onClick={verifyIntegrity} 
           disabled={isVerifying || !pdfUrl}
         >
           {isVerifying ? 'Verifying...' : 'Verify Integrity'}
-        </button>
+        </button> */}
         {verificationStatus && <span className="status">{verificationStatus}</span>}
       </div>
 

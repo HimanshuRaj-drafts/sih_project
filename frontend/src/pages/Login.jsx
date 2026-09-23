@@ -69,7 +69,7 @@ const Login = () => {
       <div className="w-full max-w-5xl bg-white border border-slate-200 rounded-3xl shadow-xl flex flex-col md:flex-row relative overflow-hidden">
         
         {/* Left Side - Branding */}
-        <div className="md:w-5/12 p-10 flex flex-col justify-between border-b md:border-b-0 md:border-r border-slate-100 bg-slate-100/50 relative overflow-hidden">
+        <div className="md:w-5/12 p-6 md:p-10 flex flex-col justify-between border-b md:border-b-0 md:border-r border-slate-100 bg-slate-100/50 relative overflow-hidden">
           <div className="relative z-10">
             <div className="flex items-center space-x-6 mb-12 animate-cipher" style={{animationDelay: '100ms'}}>
               <img src={ncrbLogo} alt="NCRB" className="h-28 w-auto drop-shadow-sm" />
@@ -95,7 +95,7 @@ const Login = () => {
         </div>
 
         {/* Right Side - Auth Form */}
-        <div className="md:w-7/12 p-10 md:p-16 flex flex-col justify-center relative z-10">
+        <div className="md:w-7/12 p-6 sm:p-10 md:p-16 flex flex-col justify-center relative z-10">
           <div className="mb-10 animate-cipher" style={{animationDelay: '300ms'}}>
             <h2 className="text-3xl font-black text-slate-900 tracking-tight mb-2">
               {isResettingPassword ? 'Reset Password' : (isLogin ? 'Log in' : 'Create Account')}

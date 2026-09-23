@@ -6,7 +6,7 @@ import { auth } from '../services/supabase';
 import ncrbLogo from '../assets/ncrb-logo.png';
 import sihLogo from '../assets/sih-logo.png';
 
-const Sidebar = () => {
+const Sidebar = ({ sidebarOpen, setSidebarOpen }) => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [profile, setProfile] = useState({ full_name: 'Loading...', role: '...' });
@@ -35,11 +35,11 @@ const Sidebar = () => {
   const navLinks = [
     { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
     { name: 'Upload Document', path: '/upload', icon: FileUp },
-    { name: 'Verify Integrity', path: '/verify', icon: ShieldCheck },
+    // { name: 'Verify Integrity', path: '/verify', icon: ShieldCheck },
   ];
 
   return (
-    <aside className="w-64 bg-white border-r border-slate-200 flex flex-col h-screen shadow-sm font-sans z-40 relative">
+    <aside className={`fixed md:relative inset-y-0 left-0 transform ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 transition-transform duration-300 ease-in-out w-64 bg-white border-r border-slate-200 flex flex-col h-full shadow-sm font-sans z-40`}>
       {/* Logos & Branding */}
       <div className="p-6 border-b border-slate-100 flex items-center space-x-3">
         <img src={ncrbLogo} alt="NCRB" className="h-10 w-auto" />
@@ -54,6 +54,7 @@ const Sidebar = () => {
             <NavLink
               key={link.name}
               to={link.path}
+              onClick={() => setSidebarOpen(false)}
               className={({ isActive }) =>
                 `flex items-center space-x-3 px-4 py-3 rounded-xl font-bold transition-all ${
                   isActive

@@ -111,11 +111,11 @@ const Upload = () => {
   };
 
   return (
-    <div className="p-10 max-w-4xl mx-auto animate-cipher" style={{animationDelay: '100ms'}}>
-      <div className="mb-8">
-        <h1 className="text-4xl font-black text-slate-900 mb-2 tracking-tight">Document Ingestion</h1>
-        <div className="h-[4px] w-12 bg-blue-600 rounded-full mb-4"></div>
-        <p className="text-slate-500 font-medium text-lg">Secure cryptographic pipeline for evidence archival.</p>
+    <div className="p-4 sm:p-10 max-w-4xl mx-auto animate-cipher w-full" style={{animationDelay: '100ms'}}>
+      <div className="mb-8 text-center sm:text-left">
+        <h1 className="text-3xl md:text-4xl font-black text-slate-900 mb-2 tracking-tight">Document Ingestion</h1>
+        <div className="h-[4px] w-12 bg-blue-600 rounded-full mb-4 mx-auto sm:mx-0"></div>
+        <p className="text-slate-500 font-medium text-base md:text-lg">Secure cryptographic pipeline for evidence archival.</p>
       </div>
 
       {errorMessage && (
@@ -127,17 +127,17 @@ const Upload = () => {
 
       {success && previewData && (
         <div className="mb-8 p-6 bg-emerald-50 border-2 border-emerald-500 rounded-3xl flex flex-col space-y-6 shadow-sm animate-cipher" style={{animationDelay: '200ms'}}>
-          <div className="flex items-center justify-between border-b border-emerald-200 pb-4">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b border-emerald-200 pb-4 space-y-4 sm:space-y-0">
             <div className="flex items-center space-x-3 text-emerald-800">
               <CheckCircle className="h-8 w-8 flex-shrink-0 text-emerald-600" />
               <div>
-                <h2 className="text-xl font-black">Document Secured & Registered</h2>
-                <p className="text-sm font-semibold text-emerald-600">Redactions applied and blockchain anchor verified.</p>
+                <h2 className="text-lg md:text-xl font-black leading-tight">Document Secured & Registered</h2>
+                <p className="text-xs md:text-sm font-semibold text-emerald-600">Redactions applied and blockchain anchor verified.</p>
               </div>
             </div>
             <button 
               onClick={() => navigate('/dashboard')}
-              className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-6 rounded-xl transition-colors shadow-sm text-sm"
+              className="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 md:py-2 px-6 rounded-xl transition-colors shadow-sm text-sm"
             >
               Go to Dashboard
             </button>
@@ -199,7 +199,7 @@ const Upload = () => {
       <div className={`bg-white border border-slate-200 rounded-3xl shadow-sm overflow-hidden flex flex-col lg:flex-row transition-all duration-500 ${success ? 'opacity-50 pointer-events-none scale-95 origin-top' : ''}`}>
         
         {/* Left Side: Upload Area */}
-        <div className="lg:w-1/2 p-8 border-b lg:border-b-0 lg:border-r border-slate-100 bg-slate-50/50 flex flex-col justify-center">
+        <div className="w-full lg:w-1/2 p-4 sm:p-8 border-b lg:border-b-0 lg:border-r border-slate-100 bg-slate-50/50 flex flex-col justify-center">
           <div className="text-center">
             {file ? (
               <div className="bg-white border-2 border-dashed border-blue-200 rounded-2xl p-8 flex flex-col items-center justify-center transition-all">
@@ -237,21 +237,21 @@ const Upload = () => {
               value={caseNumberInput}
               onChange={(e) => setCaseNumberInput(e.target.value)}
               disabled={status !== 'idle'}
-              className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all outline-none text-slate-700 font-medium disabled:opacity-50"
+              className="w-full px-4 py-3.5 sm:py-3 rounded-xl border border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all outline-none text-slate-700 font-medium disabled:opacity-50 text-base"
             />
           </div>
 
           <button
             onClick={simulatePipeline}
             disabled={!file || !caseNumberInput.trim() || status !== 'idle'}
-            className={`mt-8 w-full bg-slate-900 text-white rounded-xl py-3.5 font-bold hover:bg-blue-700 transition-all focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 text-base shadow-lg ${(!file || !caseNumberInput.trim() || status !== 'idle') ? 'opacity-50 cursor-not-allowed' : ''}`}
+            className={`mt-8 w-full bg-slate-900 text-white rounded-xl py-4 sm:py-3.5 font-bold hover:bg-blue-700 transition-all focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 text-base md:text-lg shadow-lg ${(!file || !caseNumberInput.trim() || status !== 'idle') ? 'opacity-50 cursor-not-allowed' : ''}`}
           >
             {status === 'idle' ? 'Initiate Pipeline' : 'Pipeline Active...'}
           </button>
         </div>
 
         {/* Right Side: Stepper UI */}
-        <div className="lg:w-1/2 p-8">
+        <div className="w-full lg:w-1/2 p-4 sm:p-8">
           <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-6">Pipeline Status</h3>
           
           <div className="space-y-6">
