@@ -66,44 +66,55 @@ class AnchorRequest(BaseModel):
     document_hash: str
     uploader_id: str
 
+from typing import Optional
+
 @router.post("/upload")
 async def upload_evidence(
     file: UploadFile = File(...),
     case_number: str = Form(...),
-    uploader_id: str = Form(...)
+    uploader_id: str = Form(...),
+    manual_redacted_file: Optional[UploadFile] = File(None)
 ):
     try:
         content = await file.read()
         filename = file.filename
         
-        # 1. OCR Extraction
-        ocr_result = ingest_and_extract_text(content, filename)
-        extracted_text = ocr_result["raw_text"]
-        
-        # 2. PII Detection
-        pii_data = detect_pii(extracted_text)
-        
-        # 3. Redaction (returns io.BytesIO)
-        if filename.lower().endswith('.pdf'):
-            redacted_io = apply_redactions(content, pii_data)
-            mime_type = "application/pdf"
-        else:
-            redacted_io = io.BytesIO(content) # Fallback for non-pdfs for now
-            mime_type = "image/jpeg" if filename.lower().endswith(('.jpg', '.jpeg')) else "image/png"
-            
-        # Generate Preview & Entities
-        redacted_preview_base64 = f"data:{mime_type};base64," + base64.b64encode(redacted_io.getvalue()).decode('utf-8')
-        
-        redacted_entities = []
-        for k, v in pii_data.items():
-            items = list(v) if v else []
-            if items:
-                redacted_entities.append({"type": k.capitalize(), "count": len(items)})
-
         # 4. Cryptographic Hashing of ORIGINAL Content (for Zero-Trust Verification)
         # We must anchor the raw original evidence hash, not the redacted version.
         doc_hash = hashlib.sha256(content).hexdigest().strip().lower()
         print(f"ANCHORED HASH: {doc_hash}")
+
+        if manual_redacted_file:
+            print(f"!!! MANUAL REDACTED FILE RECEIVED: {manual_redacted_file.filename} (Size: {manual_redacted_file.size}) !!!")
+            redacted_content = await manual_redacted_file.read()
+            redacted_io = io.BytesIO(redacted_content)
+            mime_type = manual_redacted_file.content_type or "image/png"
+            redacted_preview_base64 = f"data:{mime_type};base64," + base64.b64encode(redacted_content).decode('utf-8')
+            redacted_entities = [{"type": "Manual Redaction", "count": 1}]
+        else:
+            # 1. OCR Extraction
+            ocr_result = ingest_and_extract_text(content, filename)
+            extracted_text = ocr_result["raw_text"]
+            
+            # 2. PII Detection
+            pii_data = detect_pii(extracted_text)
+            
+            # 3. Redaction (returns io.BytesIO)
+            if filename.lower().endswith('.pdf'):
+                redacted_io = apply_redactions(content, pii_data)
+                mime_type = "application/pdf"
+            else:
+                redacted_io = io.BytesIO(content) # Fallback for non-pdfs for now
+                mime_type = "image/jpeg" if filename.lower().endswith(('.jpg', '.jpeg')) else "image/png"
+                
+            # Generate Preview & Entities
+            redacted_preview_base64 = f"data:{mime_type};base64," + base64.b64encode(redacted_io.getvalue()).decode('utf-8')
+            
+            redacted_entities = []
+            for k, v in pii_data.items():
+                items = list(v) if v else []
+                if items:
+                    redacted_entities.append({"type": k.capitalize(), "count": len(items)})
         
         # 5. Generate document ID
         document_id = str(uuid.uuid4())
@@ -165,6 +176,38 @@ async def view_evidence(
 
 import re
 from app.services.blockchain_service import MOCK_LEDGER
+import pytesseract
+from PIL import Image
+import platform
+
+# Configure tesseract path (OS agnostic for production deployments)
+if platform.system() == "Windows":
+    pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
+else:
+    # On Linux/macOS, it is in PATH after running apt-get install tesseract-ocr
+    pytesseract.pytesseract.tesseract_cmd = 'tesseract'
+
+@router.post("/ocr-boxes")
+async def extract_ocr_boxes(file: UploadFile = File(...)):
+    try:
+        content = await file.read()
+        img = Image.open(io.BytesIO(content))
+        data = pytesseract.image_to_data(img, output_type=pytesseract.Output.DICT)
+        
+        boxes = []
+        n_boxes = len(data['text'])
+        for i in range(n_boxes):
+            if int(data['conf'][i]) > 30 and data['text'][i].strip():
+                boxes.append({
+                    "text": data['text'][i],
+                    "left": data['left'][i],
+                    "top": data['top'][i],
+                    "width": data['width'][i],
+                    "height": data['height'][i]
+                })
+        return {"boxes": boxes, "width": img.width, "height": img.height}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/verify/{document_hash}")
 def verify_evidence(document_hash: str):

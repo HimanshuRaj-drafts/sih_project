@@ -3,8 +3,9 @@ import { createPortal } from 'react-dom';
 import { useSearchParams } from 'react-router-dom';
 import { db, supabase } from '../services/supabase';
 import { verifyDocumentHash } from '../services/blockchain';
-import { RefreshCw, Search, FileText, X, Loader, Eye, ShieldCheck } from 'lucide-react';
+import { RefreshCw, Search, FileText, X, Loader, Eye, ShieldCheck, Info, User } from 'lucide-react';
 import ViewEvidenceModal from '../components/ViewEvidenceModal';
+import { useAuth } from '../context/AuthContext';
 
 const Dashboard = () => {
   const [cases, setCases] = useState([]);
@@ -13,6 +14,17 @@ const Dashboard = () => {
   const searchTerm = searchParams.get('q') || '';
   const [selectedDocId, setSelectedDocId] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [infoModalOpen, setInfoModalOpen] = useState(false);
+  const [infoData, setInfoData] = useState(null);
+  const { user } = useAuth();
+
+  const maskEmail = (email) => {
+    if (!email) return 'usr*********@ncrb.gov.in';
+    const [name, domain] = email.split('@');
+    if (!domain) return email;
+    const maskedName = name.substring(0, 3) + '*********';
+    return `${maskedName}@${domain}`;
+  };
 
   const fetchCases = async () => {
     setLoading(true);
@@ -34,6 +46,11 @@ const Dashboard = () => {
   const handleViewDocument = (fileName) => {
     setSelectedDocId(fileName);
     setIsModalOpen(true);
+  };
+
+  const handleInfoClick = (c) => {
+    setInfoData(c);
+    setInfoModalOpen(true);
   };
 
   const filteredCases = cases.filter(c => 
@@ -130,6 +147,13 @@ const Dashboard = () => {
                       <span>Verify</span>
                     </button> */}
                     <button
+                      onClick={() => handleInfoClick(c)}
+                      className="inline-flex items-center justify-center space-x-1 text-sm text-slate-600 hover:text-slate-800 transition-colors font-medium bg-slate-100 px-3 py-3 sm:py-1.5 rounded-lg hover:bg-slate-200 min-h-[44px] sm:min-h-0"
+                      title="View Info"
+                    >
+                      <Info className="h-4 w-4" />
+                    </button>
+                    <button
                       onClick={() => handleViewDocument(c.file_name)}
                       className="inline-flex items-center justify-center space-x-1 text-sm text-blue-600 hover:text-blue-800 transition-colors font-medium bg-blue-50 px-3 py-3 sm:py-1.5 rounded-lg hover:bg-blue-100 min-h-[44px] sm:min-h-0"
                     >
@@ -158,6 +182,50 @@ const Dashboard = () => {
         }}
         documentId={selectedDocId}
       />
+
+      {/* Info Modal */}
+      {infoModalOpen && infoData && createPortal(
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden animate-cipher relative">
+            <div className="flex justify-between items-center p-6 border-b border-slate-100">
+              <h3 className="text-xl font-black text-slate-900">Document Information</h3>
+              <button onClick={() => setInfoModalOpen(false)} className="text-slate-400 hover:text-slate-600 transition-colors">
+                <X className="h-6 w-6" />
+              </button>
+            </div>
+            <div className="p-6 space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Uploaded Date</label>
+                <p className="text-slate-900 font-medium">{new Date(infoData.created_at).toLocaleDateString()}</p>
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Uploaded Time</label>
+                <p className="text-slate-900 font-medium">{new Date(infoData.created_at).toLocaleTimeString()}</p>
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Uploaded By</label>
+                <div className="flex items-center space-x-3 bg-slate-50 p-3 rounded-xl border border-slate-100">
+                  <div className="bg-blue-100 p-2 rounded-lg text-blue-600">
+                    <User className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <p className="text-slate-900 font-bold text-sm">
+                      {infoData.profiles?.full_name || 'Unknown Officer'} 
+                      <span className="ml-2 text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-bold">
+                        {infoData.profiles?.role?.toUpperCase() || 'OFFICER'}
+                      </span>
+                    </p>
+                    <p className="text-slate-500 text-xs font-medium mt-0.5">
+                      {infoData.uploader_id === user?.id ? maskEmail(user?.email) : maskEmail(infoData.profiles?.email)}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
     </div>
   );
 };

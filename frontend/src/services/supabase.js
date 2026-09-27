@@ -18,6 +18,9 @@ export const auth = {
     const { data: authData, error: authError } = await supabase.auth.signUp({
       email,
       password,
+      options: {
+        emailRedirectTo: `${window.location.origin}/dashboard`
+      }
     });
     if (authError) throw authError;
 
@@ -105,7 +108,7 @@ export const db = {
   },
 
   async fetchCases() {
-    const { data, error } = await supabase
+    const { data: casesData, error: casesError } = await supabase
       .from('cases')
       .select(`
         id,
@@ -113,11 +116,34 @@ export const db = {
         file_name,
         document_hash,
         blockchain_tx_hash,
-        created_at
+        created_at,
+        uploader_id
       `)
       .order('created_at', { ascending: false });
       
-    if (error) throw error;
-    return data;
+    if (casesError) throw casesError;
+
+    // Manually fetch profiles since there may not be a strict foreign key constraint
+    if (casesData && casesData.length > 0) {
+      const uploaderIds = [...new Set(casesData.map(c => c.uploader_id))].filter(Boolean);
+      if (uploaderIds.length > 0) {
+        const { data: profilesData, error: profilesError } = await supabase
+          .from('profiles')
+          .select('id, full_name, role')
+          .in('id', uploaderIds);
+          
+        if (!profilesError && profilesData) {
+          const profileMap = {};
+          profilesData.forEach(p => profileMap[p.id] = p);
+          casesData.forEach(c => {
+            if (c.uploader_id) {
+              c.profiles = profileMap[c.uploader_id] || null;
+            }
+          });
+        }
+      }
+    }
+
+    return casesData;
   }
 };

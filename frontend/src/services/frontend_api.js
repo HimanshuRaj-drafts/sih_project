@@ -6,12 +6,16 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000
  * 1. Upload & Redact
  * Sends FormData containing the raw evidence file, case_number, and uploader_id.
  */
-export async function uploadEvidence(file, caseNumber, uploaderId) {
+export async function uploadEvidence(file, caseNumber, uploaderId, manualRedactedFile = null) {
   try {
     const formData = new FormData();
     formData.append('file', file);
     formData.append('case_number', caseNumber);
     formData.append('uploader_id', uploaderId);
+    if (manualRedactedFile) {
+      console.log("Sending manualRedactedFile. Size:", manualRedactedFile.size);
+      formData.append('manual_redacted_file', manualRedactedFile);
+    }
 
     const response = await fetch(`${API_BASE_URL}/api/v1/evidence/upload`, {
       method: 'POST',

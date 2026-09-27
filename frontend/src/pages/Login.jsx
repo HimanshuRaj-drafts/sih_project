@@ -44,7 +44,11 @@ const Login = () => {
       } else if (isLogin) {
         await auth.signIn(email, password);
       } else {
-        await auth.signUp(email, password, role, fullName);
+        const data = await auth.signUp(email, password, role, fullName);
+        if (data && data.user && !data.session) {
+          setSuccess('Account created! Please check your email for a confirmation link to activate your account.');
+          setIsLogin(true); // Switch back to login view
+        }
       }
     } catch (err) {
       let errorMessage = err.message || 'An error occurred.';
@@ -187,7 +191,7 @@ const Login = () => {
                       >
                         <option value="Constable">Constable</option>
                         <option value="Lead IO">Lead IO</option>
-                        <option value="Public Prosecutor">Public Prosecutor</option>
+                        <option value="Prosecutor">Public Prosecutor</option>
                         <option value="Judge">Judge</option>
                       </select>
                     </div>
@@ -223,14 +227,6 @@ const Login = () => {
           {/* Extra Buttons */}
           {!isResettingPassword ? (
             <>
-              <button
-                type="button"
-                className="mt-6 w-full flex items-center justify-center space-x-3 border-2 border-slate-200 bg-white hover:bg-slate-50 hover:border-slate-300 text-slate-700 rounded-xl py-3.5 font-bold transition-all focus:outline-none focus:ring-2 focus:ring-slate-300 focus:ring-offset-2 text-sm shadow-sm animate-cipher"
-                style={{animationDelay: '800ms'}}
-              >
-                <Wallet className="h-5 w-5 text-blue-600" strokeWidth={2.5} />
-                <span>Connect MetaMask Wallet</span>
-              </button>
 
               <div className="mt-12 text-center text-sm font-bold text-slate-500 animate-cipher" style={{animationDelay: '900ms'}}>
                 <span>{isLogin ? "Don't have an account? " : "Already have an account? "}</span>

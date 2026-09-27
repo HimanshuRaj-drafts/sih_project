@@ -4,7 +4,8 @@ import { useAuth } from '../context/AuthContext';
 import { vault, db } from '../services/supabase';
 import { registerDocumentHash } from '../services/blockchain';
 import { uploadEvidence, anchorEvidence } from '../services/frontend_api';
-import { UploadCloud, CheckCircle, Clock, ShieldCheck, Database, Link, AlertCircle, File } from 'lucide-react';
+import { UploadCloud, CheckCircle, Clock, ShieldCheck, Database, Link, AlertCircle, File, Edit2 } from 'lucide-react';
+import DocumentRedactor from '../components/DocumentRedactor';
 
 const Upload = () => {
   const { user } = useAuth();
@@ -16,6 +17,8 @@ const Upload = () => {
   const [errorMessage, setErrorMessage] = useState('');
   const [success, setSuccess] = useState(false);
   const [previewData, setPreviewData] = useState(null);
+  const [showRedactor, setShowRedactor] = useState(false);
+  const [redactedFile, setRedactedFile] = useState(null);
 
   const handleFileChange = (e) => {
     if (e.target.files && e.target.files[0]) {
@@ -23,6 +26,8 @@ const Upload = () => {
       setStatus('idle');
       setErrorMessage('');
       setPreviewData(null);
+      setShowRedactor(false);
+      setRedactedFile(null);
     }
   };
 
@@ -43,7 +48,7 @@ const Upload = () => {
       // Station 1 & 2: AI Redaction & Vault Archival (FastAPI Backend)
       console.log("Station 1: Redaction & Upload start");
       setStatus('redacting');
-      const uploadRes = await uploadEvidence(file, caseNumberInput.trim(), user.id);
+      const uploadRes = await uploadEvidence(file, caseNumberInput.trim(), user.id, redactedFile);
       
       setStatus('archiving');
       await delay(500); // Small delay for visual effect
@@ -196,23 +201,51 @@ const Upload = () => {
         </div>
       )}
 
+      {showRedactor && file && (file.type.startsWith('image/') || file.type === 'application/pdf') && (
+        <DocumentRedactor 
+          file={file} 
+          onComplete={(newFile) => { 
+            setRedactedFile(newFile); 
+            setShowRedactor(false); 
+          }} 
+          onCancel={() => setShowRedactor(false)} 
+        />
+      )}
+
       <div className={`bg-white border border-slate-200 rounded-3xl shadow-sm overflow-hidden flex flex-col lg:flex-row transition-all duration-500 ${success ? 'opacity-50 pointer-events-none scale-95 origin-top' : ''}`}>
         
         {/* Left Side: Upload Area */}
         <div className="w-full lg:w-1/2 p-4 sm:p-8 border-b lg:border-b-0 lg:border-r border-slate-100 bg-slate-50/50 flex flex-col justify-center">
           <div className="text-center">
             {file ? (
-              <div className="bg-white border-2 border-dashed border-blue-200 rounded-2xl p-8 flex flex-col items-center justify-center transition-all">
+              <div className="bg-white border-2 border-dashed border-blue-200 rounded-2xl p-8 flex flex-col items-center justify-center transition-all relative">
+                {redactedFile && (
+                  <div className="absolute top-4 right-4 bg-emerald-100 text-emerald-800 text-xs font-bold px-2 py-1 rounded-md border border-emerald-200 flex items-center space-x-1">
+                    <CheckCircle className="w-3 h-3" />
+                    <span>Manually Redacted</span>
+                  </div>
+                )}
                 <File className="h-12 w-12 text-blue-600 mb-4" strokeWidth={1.5} />
                 <p className="text-lg font-black text-slate-900 truncate w-full px-4">{file.name}</p>
                 <p className="text-sm font-semibold text-slate-500 mt-1">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
                 {status === 'idle' && (
-                  <button 
-                    onClick={() => setFile(null)}
-                    className="mt-4 text-xs font-bold text-red-500 hover:text-red-700 uppercase tracking-wide"
-                  >
-                    Remove File
-                  </button>
+                  <div className="flex flex-col items-center mt-4 space-y-2">
+                    {(file.type.startsWith('image/') || file.type === 'application/pdf') && !showRedactor && (
+                      <button 
+                        onClick={() => setShowRedactor(true)}
+                        className="text-xs font-bold text-blue-600 hover:text-blue-800 uppercase tracking-wide bg-blue-50 px-4 py-2 rounded-lg flex items-center space-x-1"
+                      >
+                        <Edit2 className="w-3 h-3" />
+                        <span>{redactedFile ? 'Redraw Manual Redactions' : 'Draw Manual Redactions'}</span>
+                      </button>
+                    )}
+                    <button 
+                      onClick={() => { setFile(null); setRedactedFile(null); }}
+                      className="text-xs font-bold text-red-500 hover:text-red-700 uppercase tracking-wide p-2"
+                    >
+                      Remove File
+                    </button>
+                  </div>
                 )}
               </div>
             ) : (

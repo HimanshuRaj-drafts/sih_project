@@ -35,7 +35,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }) => {
   const navLinks = [
     { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
     { name: 'Upload Document', path: '/upload', icon: FileUp },
-    // { name: 'Verify Integrity', path: '/verify', icon: ShieldCheck },
+    { name: 'Verify Integrity', path: '/verify', icon: ShieldCheck },
   ];
 
   return (

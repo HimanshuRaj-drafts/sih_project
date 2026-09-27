@@ -1,0 +1,58 @@
+# NCRB Secure Docs - Webpage Workflow & Logic Guide
+
+This document explains the step-by-step workflow of the application, detailing how the primary components interact and what happens when a user clicks any interactive element.
+
+## 1. Authentication (Login / Sign Up)
+**Path:** `/login`
+**What it does:** This is the entry point of the app. It restricts access to authorized personnel only.
+**Buttons & Logic:**
+- **"Log in" / "Create Account" Button:** Depending on the current mode, this interacts with Supabase Auth to either authenticate an existing user or register a new one. Upon success, the user is redirected to the `/dashboard`.
+- **"Sign up" / "Log in" Toggle Link (Bottom):** Switches the form mode between login and registration.
+- **"Forgot Password?":** Switches the form to recovery mode. Clicking "Send Reset Link" triggers an email from Supabase containing a secure reset link.
+- **"Connect MetaMask Wallet":** A UI placeholder/helper to prompt the user to connect their Web3 wallet (required later for blockchain interactions on the backend).
+
+## 2. Navigation & Layout
+The application uses a persistent shell layout once logged in, consisting of a Sidebar and a TopBar.
+
+### TopBar (`TopBar.jsx`)
+- **Global Search Bar:** When you type a query and press **Enter**, it routes the application to `/dashboard?q=your-query`. This allows you to jump straight into searching cases from any page.
+- **Hamburger Menu (Mobile Only):** Clicking this slides the Sidebar into view on small screens.
+
+### Sidebar (`Sidebar.jsx`)
+- **Navigation Links (Dashboard, Upload Document):** Instantly route the user to the respective pages using client-side routing (no page reload).
+- **User Profile Area (Bottom Left):** Clicking your user name/avatar opens a popup menu.
+  - **"Change Password":** Routes you to the `/update-password` page.
+  - **"Logout":** Clears your Supabase authentication session and kicks you back to the `/login` screen.
+
+## 3. Dashboard (`Dashboard.jsx`)
+**Path:** `/dashboard`
+**What it does:** Acts as the central hub, displaying all secured cases fetched from the Supabase database.
+**Buttons & Logic:**
+- **Search Bar:** As you type, it instantly filters the displayed table locally (checking against case numbers and filenames). It is synced with the URL query parameters.
+- **"Refresh" Button:** Triggers a re-fetch of the case list from the Supabase database (`db.fetchCases()`). It spins while loading.
+- **"Inspect" Button (Table Row):** Clicking this opens the `ViewEvidenceModal`. Inside the modal, the `DocumentViewer` component securely fetches the decrypted/redacted PDF stream from the backend and displays it in an iframe.
+
+*(Note: The "Verify" button on the table was historically used for direct blockchain checks but has been hidden in favor of the dedicated Zero-Trust Verifier tool).*
+
+## 4. Document Ingestion Pipeline (`Upload.jsx`)
+**Path:** `/upload`
+**What it does:** This is the core cryptographic pipeline where officers upload sensitive evidence.
+**Buttons & Logic:**
+- **"Select Document" (Dropzone):** Opens the native file browser. Once a file is selected, it previews the filename and size.
+- **"Remove File":** Clears the currently selected file.
+- **"Initiate Pipeline" Button:** This triggers the main 4-step security pipeline:
+  1. **Station 1 (AI Redaction):** The file is sent to the Python FastAPI backend, where OCR and NLP models redact Personally Identifiable Information (PII).
+  2. **Station 2 (Vault Archival):** The redacted document is securely archived in Supabase Storage.
+  3. **Station 3 (Blockchain Anchor):** The cryptographic hash of the document is sent to an Ethereum Smart Contract (via Web3) to mint a tamper-proof receipt.
+  4. **Station 4 (DB Registration):** The metadata (Tx Hash, Doc Hash, Case Number) is finally saved to the Supabase Database.
+- **"Go to Dashboard" Button:** Appears only after a successful pipeline run, allowing the user to return to the dashboard to view the newly minted record.
+
+## 5. Zero-Trust Evidence Verifier (`Verify.jsx`)
+**Path:** `/verify`
+**What it does:** Allows anyone to cryptographically prove that a document has not been tampered with since it was originally uploaded.
+**Buttons & Logic:**
+- **"Upload Document" Toggle:** Switches the UI to accept a file upload. When a file is uploaded, the frontend locally calculates its SHA-256 hash and automatically queries the backend/blockchain to see if that exact hash exists.
+- **"Paste SHA-256 Hash" Toggle:** Switches the UI to a manual input form.
+- **"Verify" Button (in Hash mode):** Takes the pasted hash string and queries the Python backend (`/api/v1/evidence/verify/{hash}`).
+  - **If Authentic:** Displays a green success card showing the Block number, original Uploader, Timestamp, and Tx Hash.
+  - **If Tampered/Not Found:** Displays a red failure card indicating the document has been altered or doesn't exist on the ledger.

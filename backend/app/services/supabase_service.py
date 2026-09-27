@@ -86,8 +86,8 @@ def upload_master_pdf(file_bytes: io.BytesIO, filename: str, user_id: str) -> st
         client = _ensure_client()
         # The Python supabase client accepts bytes for upload.
         storage = client.storage.from_(_BUCKET_NAME)
-        # Attempt to upload without upsert to avoid silent overwrites.
-        res = storage.upload(path, data)
+        # Allow upsert so if user uploads the same file with manual redactions, it overwrites the old one
+        res = storage.upload(path, data, file_options={"upsert": "true"})
         # supabase-py returns a dict-like response; detect errors
         if isinstance(res, dict) and res.get("error"):
             logging.error("Supabase storage upload error: %s", res.get("error"))
