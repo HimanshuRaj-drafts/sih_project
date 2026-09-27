@@ -264,6 +264,57 @@ const DocumentRedactor = ({ file, onComplete, onCancel }) => {
     }
   };
 
+  // Pinch to Zoom Logic
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    let startDist = 0;
+    let initialScale = 1;
+
+    const getDistance = (touches) => {
+      return Math.hypot(
+        touches[0].clientX - touches[1].clientX,
+        touches[0].clientY - touches[1].clientY
+      );
+    };
+
+    const handleTouchStart = (e) => {
+      if (e.touches.length === 2) {
+        e.preventDefault();
+        startDist = getDistance(e.touches);
+        initialScale = scale;
+      }
+    };
+
+    const handleTouchMove = (e) => {
+      if (e.touches.length === 2) {
+        e.preventDefault();
+        const currentDist = getDistance(e.touches);
+        const newScale = Math.min(Math.max(0.5, initialScale * (currentDist / startDist)), 4);
+        setScale(newScale);
+      }
+    };
+
+    const handleWheel = (e) => {
+      if (e.ctrlKey) {
+        e.preventDefault();
+        const newScale = Math.min(Math.max(0.5, scale - e.deltaY * 0.01), 4);
+        setScale(newScale);
+      }
+    };
+
+    container.addEventListener('touchstart', handleTouchStart, { passive: false });
+    container.addEventListener('touchmove', handleTouchMove, { passive: false });
+    container.addEventListener('wheel', handleWheel, { passive: false });
+
+    return () => {
+      container.removeEventListener('touchstart', handleTouchStart);
+      container.removeEventListener('touchmove', handleTouchMove);
+      container.removeEventListener('wheel', handleWheel);
+    };
+  }, [scale]);
+
   return createPortal(
     <div className="fixed top-0 left-0 z-[9999] w-screen h-screen bg-[#F8FAFC] flex flex-col overflow-hidden animate-cipher m-0 p-0">
       {/* Top Toolbar */}

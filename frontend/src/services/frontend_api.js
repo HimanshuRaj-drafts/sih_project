@@ -87,7 +87,7 @@ export async function viewEvidence(documentId, officerEmail) {
     const blob = await response.blob();
     // Convert binary stream to an Object URL for <iframe> or <img> tags
     const objectUrl = URL.createObjectURL(blob);
-    return objectUrl;
+    return { objectUrl, type: blob.type };
   } catch (error) {
     console.error("Error in viewEvidence:", error);
     throw error;
