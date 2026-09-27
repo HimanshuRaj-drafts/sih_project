@@ -54,7 +54,8 @@ const DocumentRedactor = ({ file, onComplete, onCancel }) => {
         try {
           const formData = new FormData();
           formData.append('file', file);
-          const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+          const rawBase = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+          const baseUrl = rawBase.replace(/\/+$/, '');
           const response = await fetch(`${baseUrl}/api/v1/evidence/ocr-boxes`, {
             method: 'POST',
             body: formData

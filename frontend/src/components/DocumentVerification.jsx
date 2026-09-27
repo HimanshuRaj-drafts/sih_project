@@ -12,7 +12,8 @@ export default function DocumentVerification() {
     setStatus('querying');
     try {
       // Direct call to FastAPI backend
-      const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+      const rawBase = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+      const baseUrl = rawBase.replace(/\/+$/, '');
       const response = await fetch(`${baseUrl}/api/v1/evidence/verify/${hashToVerify}`);
       if (!response.ok) {
         throw new Error("Network response was not ok");
