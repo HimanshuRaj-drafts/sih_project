@@ -153,7 +153,12 @@ const Upload = () => {
               <h3 className="font-bold text-slate-800 border-b pb-2">Permanent Redaction Preview</h3>
               <div className="bg-white p-2 border border-slate-200 rounded-xl shadow-inner">
                 {previewData.base64 && previewData.base64.startsWith('data:application/pdf') ? (
-                  <iframe src={previewData.base64} className="w-full h-96 border-0 rounded-lg" title="Redacted Preview" />
+                  <object data={previewData.base64} type="application/pdf" className="w-full h-96 border-0 rounded-lg">
+                    <div className="flex flex-col items-center justify-center h-full space-y-4">
+                      <p className="text-slate-500 font-medium text-center px-4">Your mobile browser doesn't support inline PDF previews.</p>
+                      <a href={previewData.base64} download="redacted-preview.pdf" className="bg-blue-600 text-white px-4 py-2 rounded-lg font-bold">Download to View</a>
+                    </div>
+                  </object>
                 ) : previewData.base64 ? (
                   <img src={previewData.base64} className="w-full max-h-96 object-contain mx-auto rounded-lg" alt="Redacted Preview" />
                 ) : (
