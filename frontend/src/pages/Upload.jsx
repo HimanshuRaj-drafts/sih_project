@@ -6,6 +6,14 @@ import { registerDocumentHash } from '../services/blockchain';
 import { uploadEvidence, anchorEvidence } from '../services/frontend_api';
 import { UploadCloud, CheckCircle, Clock, ShieldCheck, Database, Link, AlertCircle, File, Edit2 } from 'lucide-react';
 import DocumentRedactor from '../components/DocumentRedactor';
+import { Document, Page, pdfjs } from 'react-pdf';
+import 'react-pdf/dist/esm/Page/AnnotationLayer.css';
+import 'react-pdf/dist/esm/Page/TextLayer.css';
+
+pdfjs.GlobalWorkerOptions.workerSrc = new URL(
+  'pdfjs-dist/build/pdf.worker.min.mjs',
+  import.meta.url,
+).toString();
 
 const Upload = () => {
   const { user } = useAuth();
@@ -153,12 +161,14 @@ const Upload = () => {
               <h3 className="font-bold text-slate-800 border-b pb-2">Permanent Redaction Preview</h3>
               <div className="bg-white p-2 border border-slate-200 rounded-xl shadow-inner">
                 {previewData.base64 && previewData.base64.startsWith('data:application/pdf') ? (
-                  <object data={previewData.base64} type="application/pdf" className="w-full h-96 border-0 rounded-lg">
-                    <div className="flex flex-col items-center justify-center h-full space-y-4">
-                      <p className="text-slate-500 font-medium text-center px-4">Your mobile browser doesn't support inline PDF previews.</p>
-                      <a href={previewData.base64} download="redacted-preview.pdf" className="bg-blue-600 text-white px-4 py-2 rounded-lg font-bold">Download to View</a>
-                    </div>
-                  </object>
+                  <div className="flex justify-center w-full h-96 overflow-auto bg-slate-100 rounded-lg">
+                    <Document 
+                      file={previewData.base64} 
+                      loading={<div className="p-10 text-slate-500 font-bold">Loading Preview...</div>}
+                    >
+                      <Page pageNumber={1} width={300} renderTextLayer={false} renderAnnotationLayer={false} />
+                    </Document>
+                  </div>
                 ) : previewData.base64 ? (
                   <img src={previewData.base64} className="w-full max-h-96 object-contain mx-auto rounded-lg" alt="Redacted Preview" />
                 ) : (

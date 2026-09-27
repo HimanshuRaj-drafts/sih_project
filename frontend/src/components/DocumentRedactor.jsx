@@ -404,6 +404,7 @@ const DocumentRedactor = ({ file, onComplete, onCancel }) => {
             onTouchStart={handlePointerDown}
             onTouchMove={handlePointerMove}
             onTouchEnd={handlePointerUp}
+            style={{ touchAction: mode === 'draw' ? 'none' : 'auto' }}
             className={`absolute inset-0 z-10 w-full h-full ${mode === 'draw' ? 'cursor-crosshair' : 'pointer-events-none'}`}
           />
 
